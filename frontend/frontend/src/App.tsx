@@ -1,35 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState, useRef } from "react";
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, Legend, CartesianGrid,
+} from "recharts";
 
-function App() {
-  const [count, setCount] = useState(0)
+const MAX_POINTS = 20;
+
+export default function App() {
+  type DatoSensor = {
+  tiempo: string;
+  temperatura: number;
+  gas: number;
+  distancia: number;
+  movimiento: number;
+};
+
+const [data, setData] = useState<DatoSensor[]>([]);
+  const ws = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+  ws.current = new WebSocket("ws://localhost:8000/ws");
+
+  ws.current.onmessage = (event) => {
+    const payload = JSON.parse(event.data);
+
+    setData(prev => {
+        const timestamp = new Date().toLocaleTimeString();
+        const newEntry = { 
+          tiempo: timestamp,
+          temperatura: parseFloat(payload.temperatura),
+          gas: parseFloat(payload.gas),
+          distancia: parseFloat(payload.distancia),
+          movimiento: parseFloat(payload.movimiento),
+        };
+        const nuevaLista = [...prev, newEntry];
+        return nuevaLista.slice(-MAX_POINTS);
+      });
+    };
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, []);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="p-4">
+      <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Monitoreo en Tiempo Real</h1>
+
+      <LineChart width={800} height={300} data={data}>
+        <CartesianGrid stroke="#ccc" />
+        <XAxis dataKey="tiempo" />
+        <YAxis />
+        <Tooltip />
+        <Legend />
+        <Line type="monotone" dataKey="temperatura" stroke="#f97316" />
+        <Line type="monotone" dataKey="gas" stroke="#22c55e" />
+        <Line type="monotone" dataKey="distancia" stroke="#3b82f6" />
+        <Line type="monotone" dataKey="movimiento" stroke="#ec4899" />
+      </LineChart>
+    </div>
+  );
 }
 
-export default App
