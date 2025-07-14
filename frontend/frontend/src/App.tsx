@@ -48,7 +48,7 @@ const [data, setData] = useState<DatoSensor[]>([]);
     <div className="p-4">
       <h1 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>Monitoreo en Tiempo Real</h1>
 
-      <LineChart width={800} height={300} data={data}>
+      <LineChart width={1500} height={500} data={data}>
         <CartesianGrid stroke="#ccc" />
         <XAxis dataKey="tiempo" />
         <YAxis />
